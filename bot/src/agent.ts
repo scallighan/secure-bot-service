@@ -71,16 +71,6 @@ agentApp.onConversationUpdate('membersAdded', async (context: TurnContext, state
 })
 
 
-
-// Generic message handler: increments count and echoes the user's message
-agentApp.onActivity(ActivityTypes.Message, async (context: TurnContext, state: ApplicationTurnState) => {
-  let count = state.conversation.count ?? 0
-  state.conversation.count = ++count
-
-  await context.sendActivity(`[${count}] echoing: ${context.activity.text}`)
-})
-
-
 // Handler for activities whose type matches the regex /^message/
 agentApp.onActivity(/^message/, async (context: TurnContext, state: ApplicationTurnState) => {
   await context.sendActivity(`Matched with regex: ${context.activity.type}`)
@@ -94,3 +84,12 @@ agentApp.onActivity(
     await context.sendActivity(`Matched function: ${context.activity.type}`)
   }
 )
+
+// changing order to see if that matters
+// Generic message handler: increments count and echoes the user's message
+agentApp.onActivity(ActivityTypes.Message, async (context: TurnContext, state: ApplicationTurnState) => {
+  let count = state.conversation.count ?? 0
+  state.conversation.count = ++count
+
+  await context.sendActivity(`[${count}] echoing: ${context.activity.text}`)
+})
