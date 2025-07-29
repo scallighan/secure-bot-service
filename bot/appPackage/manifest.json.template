@@ -1,0 +1,58 @@
+{
+    "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+    "manifestVersion": "1.17",
+    "version": "1.0.0",
+    "id": "${{TEAMS_APP_ID}}",
+    "name": {
+        "short": "secure-bot-agent",
+        "full": "Secure Bot Agent"
+    },
+    "developer": {
+        "name": "Implodingduck Labs",
+        "mpnId": "",
+        "websiteUrl": "https://github.com/scallighan/secure-bot-service",
+        "privacyUrl": "https://github.com/scallighan/secure-bot-service",
+        "termsOfUseUrl": "https://github.com/scallighan/secure-bot-service"
+    },
+    "description": {
+        "short": "Secure teamsbot configuration",
+        "full": "Secure teamsbot configuration"
+    },
+    "icons": {
+        "outline": "outline.png",
+        "color": "color.png"
+    },
+    "accentColor": "#FFFFFF",
+    "staticTabs": [
+        {
+            "entityId": "conversations",
+            "scopes": ["personal"]
+        },
+        {
+            "entityId": "about",
+            "scopes": ["personal"]
+        }
+    ],
+    "bots": [
+        {
+            "botId": "${{BOT_ID}}",
+            "scopes": ["personal", "team", "groupChat"],
+            "isNotificationOnly": false,
+            "supportsCalling": false,
+            "supportsVideo": false,
+            "supportsFiles": false
+        }
+    ],
+    "permissions": [
+        "identity",
+        "messageTeamMembers"
+    ],
+    "validDomains": [
+        "${{BOT_DOMAIN}}",
+        "*.botframework.com"
+    ],
+    "webApplicationInfo": {
+        "id": "${{BOT_ID}}",
+        "resource": "api://botid-${{BOT_ID}}"
+    }
+}

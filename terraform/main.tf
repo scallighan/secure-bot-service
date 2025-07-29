@@ -259,7 +259,7 @@ resource "azurerm_application_gateway" "app_gateway" {
     pick_host_name_from_backend_http_settings = true
 
     match {
-      status_code = ["200-399"]
+      status_code = ["200-401"]
     }
   }
 
@@ -273,7 +273,7 @@ resource "azurerm_application_gateway" "app_gateway" {
     pick_host_name_from_backend_http_settings = true
 
     match {
-      status_code = ["200-399"]
+      status_code = ["200-401"]
     }
   }
 
@@ -509,7 +509,7 @@ resource "azurerm_container_app" "agent" {
 
   identity {
     type = "UserAssigned"
-    identity_ids = [azurerm_user_assigned_identity.this.id]
+    identity_ids = [azurerm_user_assigned_identity.this.id, azurerm_user_assigned_identity.bot.id]
   }
   tags = local.tags
 

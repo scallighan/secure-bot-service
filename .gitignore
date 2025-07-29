@@ -41,3 +41,5 @@ terraform.rc
 *.pfx
 
 manifest.json
+
+.terraform.lock.hcl
