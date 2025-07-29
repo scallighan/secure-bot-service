@@ -4,11 +4,11 @@ RUN apt-get update && apt-get install -y tcpdump
 
 WORKDIR /app
 
-COPY src/package.json /app/package.json
+COPY package.json /app/package.json
 
 RUN npm install
 
-COPY src /app
+COPY . /app
 COPY entry.sh /app/entry.sh
 
 RUN npm run build
