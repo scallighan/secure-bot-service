@@ -170,129 +170,127 @@ resource "azurerm_public_ip" "app_gateway" {
 }
 
 # create an application gateway
-# resource "azurerm_application_gateway" "app_gateway" {
-#   name                = "appgw-${local.func_name}"
-#   location            = azurerm_resource_group.rg.location
-#   resource_group_name = azurerm_resource_group.rg.name
-#   sku {
-#     name     = "Standard_v2"
-#     tier     = "Standard_v2"
-#     capacity = 1
-#   }
+resource "azurerm_application_gateway" "app_gateway" {
+  name                = "appgw-${local.func_name}"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  sku {
+    name     = "Basic"
+    tier     = "Basic"
+    capacity = 1
+  }
 
-#   gateway_ip_configuration {
-#     name      = "appgw-ip-config"
-#     subnet_id = azurerm_subnet.default.id
-#   }
+  gateway_ip_configuration {
+    name      = "appgw-ip-config"
+    subnet_id = azurerm_subnet.default.id
+  }
 
-#   frontend_port {
-#     name = "appgw-frontend-port"
-#     port = 80
-#   }
+  frontend_port {
+    name = "appgw-frontend-port"
+    port = 80
+  }
 
-#   frontend_port {
-#     name = "appgw-frontend-port-https"
-#     port = 443
-#   }
+  frontend_port {
+    name = "appgw-frontend-port-https"
+    port = 443
+  }
 
-#   frontend_ip_configuration {
-#     name                 = "appgw-frontend-ip"
-#     public_ip_address_id = azurerm_public_ip.app_gateway.id
-#   }
+  frontend_ip_configuration {
+    name                 = "appgw-frontend-ip"
+    public_ip_address_id = azurerm_public_ip.app_gateway.id
+  }
 
-#   backend_address_pool {
-#     name  = "appgw-backend-pool"
-#     fqdns = ["${azurerm_function_app_flex_consumption.this.name}.azurewebsites.net"]
-#   }
+  backend_address_pool {
+    name  = "appgw-backend-pool"
+    fqdns = [azurerm_container_app.agent.ingress[0].fqdn]
+  }
 
-#   backend_http_settings {
-#     name                  = "appgw-backend-https-settings"
-#     cookie_based_affinity = "Disabled"
-#     port                  = 443
-#     protocol              = "Https"
-#     request_timeout       = 20
-#     probe_name = "https-healthz"
-#     host_name = "${azurerm_function_app_flex_consumption.this.name}.azurewebsites.net"
+  backend_http_settings {
+    name                  = "appgw-backend-https-settings"
+    cookie_based_affinity = "Disabled"
+    port                  = 443
+    protocol              = "Https"
+    request_timeout       = 20
+    probe_name = "https-healthz"
+    host_name = azurerm_container_app.agent.ingress[0].fqdn
 
-#   }
+  }
 
-#   http_listener {
-#     name                           = "appgw-http-listener"
-#     frontend_ip_configuration_name = "appgw-frontend-ip"
-#     frontend_port_name             = "appgw-frontend-port"
-#     protocol                       = "Http"
-#   }
+  http_listener {
+    name                           = "appgw-http-listener"
+    frontend_ip_configuration_name = "appgw-frontend-ip"
+    frontend_port_name             = "appgw-frontend-port"
+    protocol                       = "Http"
+  }
 
-#   http_listener {
-#     name                          = "appgw-https-listener"
-#     frontend_ip_configuration_name = "appgw-frontend-ip"
-#     frontend_port_name             = "appgw-frontend-port-https"
-#     protocol                       = "Https"
-#     ssl_profile_name               = "pass-client-cert"
-#     ssl_certificate_name           = "wildcard"
-#   }
+  http_listener {
+    name                          = "appgw-https-listener"
+    frontend_ip_configuration_name = "appgw-frontend-ip"
+    frontend_port_name             = "appgw-frontend-port-https"
+    protocol                       = "Https"
+    ssl_certificate_name           = "wildcard"
+  }
 
-#   request_routing_rule {
-#     name                       = "appgw-routing-rule"
-#     priority                    = 10
-#     rule_type                  = "Basic"
-#     http_listener_name         = "appgw-http-listener"
-#     backend_address_pool_name  = "appgw-backend-pool"
-#     backend_http_settings_name = "appgw-backend-https-settings"
-#   }
+  request_routing_rule {
+    name                       = "appgw-routing-rule"
+    priority                    = 10
+    rule_type                  = "Basic"
+    http_listener_name         = "appgw-http-listener"
+    backend_address_pool_name  = "appgw-backend-pool"
+    backend_http_settings_name = "appgw-backend-https-settings"
+  }
 
-#   request_routing_rule {
-#     name                       = "appgw-routing-rule-https"
-#     priority                    = 20
-#     rule_type                  = "Basic"
-#     http_listener_name         = "appgw-https-listener"
-#     backend_address_pool_name  = "appgw-backend-pool"
-#     backend_http_settings_name = "appgw-backend-https-settings"
-#     rewrite_rule_set_name      = "pass-client-cert"
-#   }
+  request_routing_rule {
+    name                       = "appgw-routing-rule-https"
+    priority                    = 20
+    rule_type                  = "Basic"
+    http_listener_name         = "appgw-https-listener"
+    backend_address_pool_name  = "appgw-backend-pool"
+    backend_http_settings_name = "appgw-backend-https-settings"
+  }
 
-#   probe {
-#     name = "https-healthz"
-#     protocol = "Https"
-#     path = "/api/healthz"
-#     interval = 30
-#     timeout = 30
-#     unhealthy_threshold = 3
-#     pick_host_name_from_backend_http_settings = true
+  probe {
+    name = "https-healthz"
+    protocol = "Https"
+    path = "/"
+    interval = 30
+    timeout = 30
+    unhealthy_threshold = 3
+    pick_host_name_from_backend_http_settings = true
 
-#     match {
-#       status_code = ["200-399"]
-#     }
-#   }
+    match {
+      status_code = ["200-399"]
+    }
+  }
 
-#   probe {
-#     name = "http-healthz"
-#     protocol = "Http"
-#     path = "/api/healthz"
-#     interval = 30
-#     timeout = 30
-#     unhealthy_threshold = 3
-#     pick_host_name_from_backend_http_settings = true
+  probe {
+    name = "http-healthz"
+    protocol = "Http"
+    path = "/"
+    interval = 30
+    timeout = 30
+    unhealthy_threshold = 3
+    pick_host_name_from_backend_http_settings = true
 
-#     match {
-#       status_code = ["200-399"]
-#     }
-#   }
+    match {
+      status_code = ["200-399"]
+    }
+  }
 
 
-#   ssl_certificate {
-#     name = "wildcard"
-#     key_vault_secret_id = "https://${azurerm_key_vault.kv.name}.vault.azure.net/secrets/wildcard"
-#   }
+  ssl_certificate {
+    name = "wildcard"
+    key_vault_secret_id = "https://${azurerm_key_vault.kv.name}.vault.azure.net/secrets/wildcard-scallighan-cert"
+  }
 
-#   identity {
-#     type = "UserAssigned"
-#     identity_ids = [ azurerm_user_assigned_identity.appgw.id
-#     ]
-#   }
-#   tags = local.tags
+  identity {
+    type = "UserAssigned"
+    identity_ids = [ azurerm_user_assigned_identity.appgw.id
+    ]
+  }
+  tags = local.tags
 
-# }
+}
 
 resource "azurerm_user_assigned_identity" "appgw" {
   location            = azurerm_resource_group.rg.location
@@ -311,6 +309,30 @@ resource "azurerm_role_assignment" "app_gateway_certs" {
   role_definition_name = "Key Vault Certificate User"
   principal_id         = azurerm_user_assigned_identity.appgw.principal_id
 }
+
+resource "azurerm_private_dns_zone" "ace" {
+  name                = azurerm_container_app_environment.this.default_domain
+  resource_group_name = azurerm_resource_group.rg.name
+  tags = local.tags
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "ace" {
+  name                  = "link-${azurerm_container_app_environment.this.name}"
+  resource_group_name   = azurerm_resource_group.rg.name
+  private_dns_zone_name = azurerm_private_dns_zone.ace.name
+  virtual_network_id    = azurerm_virtual_network.default.id
+
+  registration_enabled = false
+}
+resource "azurerm_private_dns_a_record" "ace" {
+  name                = "*"
+  zone_name           = azurerm_private_dns_zone.ace.name
+  resource_group_name = azurerm_resource_group.rg.name
+  ttl                 = 3600
+  records             = [azurerm_container_app_environment.this.static_ip_address]
+}
+
+
 
 resource "azurerm_user_assigned_identity" "this" {
   location            = azurerm_resource_group.rg.location
@@ -338,16 +360,23 @@ resource "azurerm_container_app_environment" "this" {
 
   infrastructure_subnet_id = azurerm_subnet.cluster.id
 
+  internal_load_balancer_enabled = true
+
   workload_profile {
     name                  = "Consumption"
     workload_profile_type = "Consumption"
   }
 
   tags = local.tags
-
+  lifecycle {
+    ignore_changes = [
+     infrastructure_resource_group_name,
+     log_analytics_workspace_id
+    ]
+  }
 }
 
-resource "azurerm_container_app" "teamsbot" {
+resource "azurerm_container_app" "agent" {
   name                         = "aca-${local.func_name}"
   container_app_environment_id = azurerm_container_app_environment.this.id
   resource_group_name          = azurerm_resource_group.rg.name
@@ -356,7 +385,7 @@ resource "azurerm_container_app" "teamsbot" {
 
   template {
     container {
-      name   = "teamsbot"
+      name   = "agent"
       image  = "ghcr.io/scallighan/secure-bot-service:latest"
       cpu    = 0.25
       memory = "0.5Gi"
@@ -399,10 +428,20 @@ resource "azurerm_container_app" "teamsbot" {
       #   value = "https://login.microsoftonline.com"
       # }
 
-      # env {
-      #   name = "RUNNING_ON_AZURE"
-      #   value = "1"
-      # }
+      env {
+        name = "RUNNING_ON_AZURE"
+        value = "1"
+      }
+
+      env {
+        name = "tenantId"
+        value = var.bot_tenant_id
+      }
+
+      env {
+        name = "clientId"
+        value = azurerm_user_assigned_identity.bot.client_id
+      }
 
       # env {
       #   name = "BASE_URL"
@@ -476,5 +515,33 @@ resource "azurerm_container_app" "teamsbot" {
 
   lifecycle {
     ignore_changes = [ secret ]
+  }
+}
+
+resource "azurerm_user_assigned_identity" "bot" {
+  location            = azurerm_resource_group.rg.location
+  name                = "uai-bot-${local.func_name}"
+  resource_group_name = azurerm_resource_group.rg.name
+}
+
+resource "azapi_resource" "teamsbot" {
+  type = "Microsoft.BotService/botServices@2023-09-15-preview"
+  name = "bot-${local.func_name}"
+  location = "global"
+  parent_id = azurerm_resource_group.rg.id
+  tags = local.tags
+  body = {
+    properties = {
+      displayName = "bot-${local.func_name}"
+      endpoint = "https://${var.custom_bot_domain}/api/messages"
+      msaAppId = "${azurerm_user_assigned_identity.bot.client_id}"
+      msaAppMSIResourceId = "${azurerm_user_assigned_identity.bot.id}"
+      msaAppTenantId	= "${data.azurerm_client_config.current.tenant_id}"
+      msaAppType = "UserAssignedMSI"
+    }
+    sku = {
+      name = "F0"
+    }
+    kind = "azurebot"
   }
 }

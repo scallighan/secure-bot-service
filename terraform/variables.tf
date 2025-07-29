@@ -12,10 +12,12 @@ variable "gh_repo" {
   type = string
 }
 
-variable "subject_cn" {
+variable "bot_tenant_id" {
   type = string
+  sensitive = true
+  
 }
 
-variable "issuer_cn" {
+variable "custom_bot_domain" {
   type = string
 }
