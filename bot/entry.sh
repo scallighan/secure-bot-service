@@ -1,3 +1,3 @@
 #!/bin/bash
-ls -lta
-npm run start
+echo "Starting bot agent..."
+npm run start:anon
