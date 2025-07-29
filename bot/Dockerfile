@@ -9,7 +9,6 @@ COPY package.json /app/package.json
 RUN npm install
 
 COPY . /app
-COPY entry.sh /app/entry.sh
 
 RUN npm run build
 

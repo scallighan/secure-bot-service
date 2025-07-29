@@ -1,42 +1,30 @@
 {
-  "name": "sso-bot-sample",
-  "version": "1.0.0",
-  "description": "Microsoft 365 Agents Toolkit sso bot sample",
-  "engines": {
-    "node": "18 || 20 || 22"
-  },
-  "author": "Microsoft",
+  "name": "secure-bot-agent",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Agents echo bot sample",
+  "author": "Implodingduck Labs",
   "license": "MIT",
-  "main": "./lib/src/index.js",
+  "main": "./dist/index.js",
   "scripts": {
-    "dev:teamsfx": "env-cmd --silent -f .localConfigs npm run dev",
-    "dev": "nodemon --exec node --inspect=9239 --signal SIGINT -r ts-node/register ./src/index.ts",
+    "prebuild": "npm ci",
     "build": "tsc --build",
-    "start": "node ./lib/src/index.js",
-    "watch": "nodemon --exec \"npm run start\"",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com"
+    "prestart": "npm run build",
+    "prestart:anon": "npm run build",
+    "start:anon": "node ./dist/index.js",
+    "start": "node --env-file .env ./dist/index.js",
+    "test-tool": "agentsplayground",
+    "test": "npm-run-all -p -r start:anon test-tool"
   },
   "dependencies": {
-    "@microsoft/microsoft-graph-client": "^3.0.1",
-    "@microsoft/teamsfx": "^3.0.0-alpha",
-    "botbuilder": "^4.23.1",
-    "botbuilder-dialogs": "^4.23.1",
-    "isomorphic-fetch": "^3.0.0",
-    "express": "^5.0.1",
-    "uuid": "^9.0.1"
+    "@microsoft/agents-hosting": "^1.0.0",
+    "express": "^5.1.0"
   },
   "devDependencies": {
-    "@types/express": "^5.0.0",
-    "@types/node": "^18.0.0",
-    "@types/json-schema": "^7.0.15",
-    "env-cmd": "^10.1.0",
-    "ts-node": "^10.4.0",
-    "typescript": "^5.3.0",
-    "nodemon": "^3.1.7",
-    "shx": "^0.3.3"
-  }
+    "@microsoft/m365agentsplayground": "^0.2.16",
+    "@types/node": "^22.15.18",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.8.3"
+  },
+  "keywords": []
 }
