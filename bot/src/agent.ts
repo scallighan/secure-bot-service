@@ -30,14 +30,14 @@ export const agentApp = new AgentApplication<ApplicationTurnState>({
 // Handler for the /reset command: clears the conversation state
 agentApp.onMessage('/reset', async (context: TurnContext, state: ApplicationTurnState) => {
   state.deleteConversationState()
-  await context.sendActivity('Ok I\'ve deleted the current conversation state.')
+  await context.sendActivity('Deleted current conversation state.')
 })
 
 
 // Handler for the /count command: replies with the current message count
 agentApp.onMessage('/count', async (context: TurnContext, state: ApplicationTurnState) => {
   const count = state.conversation.count ?? 0
-  await context.sendActivity(`The count is ${count}`)
+  await context.sendActivity(`The conversation count is ${count}`)
 })
 
 
@@ -77,7 +77,7 @@ agentApp.onActivity(ActivityTypes.Message, async (context: TurnContext, state: A
   let count = state.conversation.count ?? 0
   state.conversation.count = ++count
 
-  await context.sendActivity(`[${count}] you said: ${context.activity.text}`)
+  await context.sendActivity(`[${count}] echoing: ${context.activity.text}`)
 })
 
 
