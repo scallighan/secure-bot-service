@@ -23,9 +23,16 @@ const storage = new MemoryStorage()
 // Create the main AgentApplication instance
 export const agentApp = new AgentApplication<ApplicationTurnState>({
   storage,
-  fileDownloaders: [downloader]
+  fileDownloaders: [downloader],
+  authorization: {
+    graph: { text: 'Sign in with Microsoft Graph', title: 'Graph Sign In' }
+  }
 })
 
+agentApp.authorization.onSignInSuccess(async (context: TurnContext, state: TurnState) => {
+  console.log('User signed in successfully')
+  await context.sendActivity('User signed in successfully')
+})
 
 // Handler for the /reset command: clears the conversation state
 agentApp.onMessage('/reset', async (context: TurnContext, state: ApplicationTurnState) => {
@@ -72,18 +79,18 @@ agentApp.onConversationUpdate('membersAdded', async (context: TurnContext, state
 
 
 // Handler for activities whose type matches the regex /^message/
-agentApp.onActivity(/^message/, async (context: TurnContext, state: ApplicationTurnState) => {
+agentApp.onMessage(/^message/, async (context: TurnContext, state: ApplicationTurnState) => {
   await context.sendActivity(`Matched with regex: ${context.activity.type}`)
 })
 
 
 // Handler for activities where the type is exactly 'message', using a predicate function
-agentApp.onActivity(
-  async (context: TurnContext) => Promise.resolve(context.activity.type === 'message'),
-  async (context, state) => {
-    await context.sendActivity(`Matched function: ${context.activity.type}`)
-  }
-)
+// agentApp.onActivity(
+//   async (context: TurnContext) => Promise.resolve(context.activity.type === 'message'),
+//   async (context, state) => {
+//     await context.sendActivity(`Matched function: ${context.activity.type}`)
+//   }
+// )
 
 // changing order to see if that matters
 // Generic message handler: increments count and echoes the user's message

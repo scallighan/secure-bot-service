@@ -114,6 +114,11 @@ resource "azurerm_subnet_network_security_group_association" "nsg_association" {
   network_security_group_id = azurerm_network_security_group.nsg.id
 }
 
+resource "azurerm_subnet_network_security_group_association" "nsg_association2" {
+  subnet_id                 = azurerm_subnet.cluster.id
+  network_security_group_id = azurerm_network_security_group.nsg.id
+}
+
 
 resource "azurerm_key_vault" "kv" {
   name                       = "kv-${local.func_name}"
