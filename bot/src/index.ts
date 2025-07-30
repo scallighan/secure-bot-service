@@ -15,7 +15,6 @@ server.get('/', (req, res) => {
 
 server.post('/api/messages', async (req: Request, res: Response) => {
   //inspect the request body for /diag
-  console.log('Received request:', req.body)
   if (req.body && req.body.type === 'message' && req.body.text === '/diag') {
     console.log('Received /diag request:', req.body)
     console.log('Request headers:', req.headers)
