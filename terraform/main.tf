@@ -394,44 +394,10 @@ resource "azurerm_container_app" "agent" {
       image  = "ghcr.io/scallighan/secure-bot-service:latest"
       cpu    = 0.25
       memory = "0.5Gi"
-      # env {
-      #   name = "AAD_APP_CLIENT_ID"
-      #   secret_name = "aad-app-client-id"
-      # }
-      # env {
-      #   name = "AAD_APP_CLIENT_SECRET"
-      #   secret_name = "aad-app-client-secret"
-      # }
-
-      # env {
-      #   name = "AAD_APP_TENANT_ID"
-      #   secret_name = "aad-app-tenant-id"
-      # }
-
-      # env {
-      #   name = "BOT_DOMAIN"
-      #   secret_name = "bot-domain"
-      # }
-
-      # env {
-      #   name = "BOT_ID"
-      #   secret_name = "bot-id"
-      # }
-
-      # env {
-      #   name = "BOT_PASSWORD"
-      #   secret_name = "bot-password"
-      # }
-
-      # env {
-      #   name = "BACKEND_CLIENT_ID"
-      #   secret_name = "backend-client-id"
-      # }
-
-      # env {
-      #   name = "AAD_APP_OAUTH_AUTHORITY_HOST"
-      #   value = "https://login.microsoftonline.com"
-      # }
+      env{
+        name = "graph_connectionName"
+        value = "graph"
+      }
 
       env {
         name = "RUNNING_ON_AZURE"
@@ -475,18 +441,18 @@ resource "azurerm_container_app" "agent" {
   }
 
   # secret {
-  #   name = "aad-app-client-id"
+  #   name = "clientId"
   #   identity = azurerm_user_assigned_identity.this.id
   #   key_vault_secret_id = "${azurerm_key_vault.kv.vault_uri}secrets/AAD-APP-CLIENT-ID"
   # }
   # secret {
-  #   name = "aad-app-client-secret"
+  #   name = "clientSecret"
   #   identity = azurerm_user_assigned_identity.this.id
   #   key_vault_secret_id = "${azurerm_key_vault.kv.vault_uri}secrets/AAD-APP-CLIENT-SECRET"
   # }
 
   # secret {
-  #   name = "aad-app-tenant-id"
+  #   name = "tenantId"
   #   identity = azurerm_user_assigned_identity.this.id
   #   key_vault_secret_id = "${azurerm_key_vault.kv.vault_uri}secrets/AAD-APP-TENANT-ID"
   # }

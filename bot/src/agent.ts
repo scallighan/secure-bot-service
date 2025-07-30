@@ -1,6 +1,6 @@
 
 // Import necessary classes and types from the Agents SDK
-import { TurnState, MemoryStorage, TurnContext, AgentApplication, AttachmentDownloader }
+import { TurnState, MemoryStorage, TurnContext, AgentApplication, AttachmentDownloader, MessageFactory }
   from '@microsoft/agents-hosting'
 import { version } from '@microsoft/agents-hosting/package.json'
 import { ActivityTypes } from '@microsoft/agents-activity'
@@ -33,6 +33,31 @@ agentApp.authorization.onSignInSuccess(async (context: TurnContext, state: TurnS
   console.log('User signed in successfully')
   await context.sendActivity('User signed in successfully')
 })
+
+const status = async (context: TurnContext, state: ApplicationTurnState) => {
+    await context.sendActivity(MessageFactory.text('Welcome to the Secure Bot Agent with auth demo!'))
+    const tokGraph = await agentApp.authorization.getToken(context, 'graph')
+    const statusGraph = tokGraph.token !== undefined
+    await context.sendActivity(MessageFactory.text(`Token status: Graph:${statusGraph}`))
+}
+
+agentApp.onMessage('/status', status, ['graph'])
+
+agentApp.onMessage('/me', async (context: TurnContext, state: ApplicationTurnState) => {
+    const tokGraph = await agentApp.authorization.getToken(context, 'graph')
+    if (tokGraph.token) {
+        console.log(`||| Token: ${tokGraph.token} |||`)
+        const resp = await fetch('https://graph.microsoft.com/v1.0/me', { 
+            headers: { 
+                Authorization: `Bearer ${tokGraph.token}`
+            }
+        });
+        const respjson = await resp.json();
+        await context.sendActivity(MessageFactory.text(`Profile Json: ${JSON.stringify(respjson)}`))
+    } else {
+        await context.sendActivity(MessageFactory.text('No valid token found.'))
+    }
+}, ['graph'])
 
 // Handler for the /reset command: clears the conversation state
 agentApp.onMessage('/reset', async (context: TurnContext, state: ApplicationTurnState) => {
@@ -75,6 +100,7 @@ agentApp.onMessage('/runtime', async (context: TurnContext, state: ApplicationTu
 // Welcome message when a new member is added to the conversation
 agentApp.onConversationUpdate('membersAdded', async (context: TurnContext, state: ApplicationTurnState) => {
   await context.sendActivity('Hello from the Secure Bot Agent running Agents SDK version: ' + version)
+  await status(context, state)
 })
 
 
