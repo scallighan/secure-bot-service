@@ -44,12 +44,13 @@ const status = async (context: TurnContext, state: ApplicationTurnState) => {
 agentApp.onMessage('/status', status, ['graph'])
 
 agentApp.onMessage('/me', async (context: TurnContext, state: ApplicationTurnState) => {
-    const tokGraph = await agentApp.authorization.getToken(context, 'graph')
-    if (tokGraph.token) {
-        console.log(`||| Token: ${tokGraph.token} |||`)
+    const oboToken = await agentApp.authorization.exchangeToken(context, ['https://graph.microsoft.com/.default'], 'graph')
+    if (oboToken.token) {
+
+        console.log(`||| Token: ${oboToken.token} |||`)
         const resp = await fetch('https://graph.microsoft.com/v1.0/me', { 
             headers: { 
-                Authorization: `Bearer ${tokGraph.token}`
+                Authorization: `Bearer ${oboToken.token}`
             }
         });
         const respjson = await resp.json();
