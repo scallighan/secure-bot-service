@@ -11,6 +11,7 @@ import { stat } from 'fs';
 // Define the shape of the conversation state
 interface ConversationState {
   count: number;
+  threadId?: string; // Optional thread ID for tracking conversation threads
 }
 // Alias for the application turn state
 type ApplicationTurnState = TurnState<ConversationState>
@@ -132,8 +133,8 @@ agentApp.onMessage(/^message/, async (context: TurnContext, state: ApplicationTu
 
 // Handler for message who starts with /base64url 
 agentApp.onMessage(/^\/base64url/, async (context: TurnContext, state: ApplicationTurnState) => {
-  const inputTextArr = context.activity.text.split(' ')
-  if( inputTextArr.length < 2) {
+  const inputTextArr = context.activity?.text?.split(' ')
+  if( !inputTextArr || inputTextArr.length < 2) {
     await context.sendActivity('Usage: /base64url <text>')
   }else if (inputTextArr.length >= 2) {
     switch (inputTextArr[1]) {
@@ -170,12 +171,13 @@ agentApp.onActivity(ActivityTypes.Message, async (context: TurnContext, state: A
   const client = new AgentsClient(projectEndpoint, new DefaultAzureCredential({managedIdentityClientId: process.env["AI_FOUNDRY_CLIENT_ID"]}));
   const agent = await client.getAgent(agentId);
   
-  const thread = (!state.conversation.threadId) ? await client.threads.create() : await client.threads.get(state.conversation.threadId);
+  const thread = (state.conversation.threadId) ? await client.threads.get(state.conversation.threadId) : await client.threads.create();
+  state.conversation.threadId = thread.id;
   if(!thread) {
     console.error("Failed to retrieve or create thread.");
     await context.sendActivity("Error: Unable to retrieve or create thread.");
   }else {
-    const message = await client.messages.create(thread.id, "user", context.activity.text);
+    const message = await client.messages.create(thread.id, "user", `${context.activity.text}`);
     let run = await client.runs.create(thread.id, agent.id)
 
     while (run.status === "queued" || run.status === "in_progress") {
@@ -188,7 +190,7 @@ agentApp.onActivity(ActivityTypes.Message, async (context: TurnContext, state: A
     } else {
         const messages = await client.messages.list(thread.id, { order: "desc" });
         console.log(`Messages: ${JSON.stringify(messages)}`);
-        
+
         await context.sendActivity(`[${count}] ${messages.next()}`);
     }
 
