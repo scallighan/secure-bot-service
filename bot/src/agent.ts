@@ -157,9 +157,6 @@ agentApp.onActivity(ActivityTypes.Message, async (context: TurnContext, state: A
     let count = state.conversation.count ?? 0
     state.conversation.count = ++count
 
-    // Echo the user's message with the current count
-    await context.sendActivity(`[${count}] echoing: ${context.activity.text}`)
-
     // Get configuration for the AI Foundry project and agent
     const projectEndpoint = process.env["AI_FOUNDRY_ENDPOINT"] || "http://localhost/";
     const modelDeploymentName = process.env["AI_FOUNDRY_MODEL_NAME"] || "gpt-4o";
@@ -203,8 +200,6 @@ agentApp.onActivity(ActivityTypes.Message, async (context: TurnContext, state: A
             await context.sendActivity("Error: Unable to retrieve or create thread.");
         }
         console.log(`# Thread ID: ${thread.id}`);
-        // Inform user of the thread ID
-        await context.sendActivity(`[${count}] Thread ID: ${thread.id}`)
         // Store thread ID in conversation state for future use
         state.conversation.threadId = thread.id;
         if (!thread) {
@@ -283,6 +278,27 @@ agentApp.onActivity(ActivityTypes.Message, async (context: TurnContext, state: A
                                 }))
                                 : []
                         )
+                    ],
+                    actions: [
+                        { 
+                            type: "Action.ShowCard",
+                            title: "Debug Info",
+                            card: {
+                                type: "AdaptiveCard",
+                                body: [
+                                    {
+                                        type: "TextBlock",
+                                        text: `Run ID: ${run.id}\nThread ID: ${thread.id}\nAgent ID: ${agent.id}`,
+                                        wrap: true
+                                    },
+                                    {
+                                        type: "TextBlock",
+                                        text: `Input: ${context.activity.text}`,
+                                        wrap: true
+                                    }
+                                ]
+                            }
+                        }
                     ],
                     $schema: "http://adaptivecards.io/schemas/adaptive-card.json"
                 };
