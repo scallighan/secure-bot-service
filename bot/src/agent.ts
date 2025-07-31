@@ -169,17 +169,36 @@ agentApp.onActivity(ActivityTypes.Message, async (context: TurnContext, state: A
   const modelDeploymentName = process.env["AI_FOUNDRY_MODEL_NAME"] || "gpt-4o";
   const agentId = process.env["AI_FOUNDRY_AGENT_ID"] || "";
   const client = new AgentsClient(projectEndpoint, new DefaultAzureCredential({managedIdentityClientId: process.env["AI_FOUNDRY_CLIENT_ID"]}));
+  if(!client){
+    console.error("Error: Unable to create client.");
+    await context.sendActivity("Error: Unable to create client.");
+  }
   const agent = await client.getAgent(agentId);
+    if (!agent) {
+        console.error("Error: Agent not found.");
+        await context.sendActivity("Error: Agent not found.");
+    }
   
   const thread = (state.conversation.threadId) ? await client.threads.get(state.conversation.threadId) : await client.threads.create();
+  if (!thread) {
+    console.error("Failed to retrieve or create thread.");
+    await context.sendActivity("Error: Unable to retrieve or create thread.");
+  }
   state.conversation.threadId = thread.id;
   if(!thread) {
     console.error("Failed to retrieve or create thread.");
     await context.sendActivity("Error: Unable to retrieve or create thread.");
   }else {
     const message = await client.messages.create(thread.id, "user", `${context.activity.text}`);
+    if (!message) {
+      console.error("Failed to create message.");
+      await context.sendActivity("Error: Unable to create message.");
+    }
     let run = await client.runs.create(thread.id, agent.id)
-
+    if (!run) {
+        console.error("Failed to create run.");
+        await context.sendActivity("Error: Unable to create run.");
+    }
     while (run.status === "queued" || run.status === "in_progress") {
       await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for 1 second
       run = await client.runs.get(thread.id, run.id);

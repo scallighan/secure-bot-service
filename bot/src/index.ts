@@ -9,8 +9,9 @@ const server = express()
 server.use(express.json())
 server.use(authorizeJWT(authConfig))
 
-server.get('/', async (req, res) => {
-  await res.send('Secure Bot Service Agent is running.')
+server.get('/', async (req: Request, res: Response) => {
+  res.send('Secure Bot Service Agent is running.')
+
 })
 
 server.post('/api/messages', async (req: Request, res: Response) => {
