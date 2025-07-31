@@ -251,16 +251,14 @@ agentApp.onActivity(ActivityTypes.Message, async (context: TurnContext, state: A
                 // Build and send an Adaptive Card using the provided sample input
                 // Dynamically build the Adaptive Card from the message content
                 let textValue = "";
-                let citationText = "";
+                let citationTexts: string[] = [];
                 const content = m.value.content;
                 if (Array.isArray(content) && content.length > 0 && content[0].type === "text") {
                     textValue = content[0].text.value;
-                    // If there are annotations, try to extract a citation
+                    // If there are annotations, try to extract all citations
                     if (content[0].text.annotations && content[0].text.annotations.length > 0) {
-                        const citation = content[0].text.annotations.find((a: any) => a.type === "url_citation");
-                        if (citation && citation.urlCitation) {
-                            citationText = `Source: [${citation.urlCitation.title}](${citation.urlCitation.url})`;
-                        }
+                        const citations = content[0].text.annotations.filter((a: any) => a.type === "url_citation" && a.urlCitation);
+                        citationTexts = citations.map((citation: any) => `Source: [${citation.urlCitation.title}](${citation.urlCitation.url})`);
                     }
                 } else {
                     textValue = typeof content === "string" ? content : JSON.stringify(content);
@@ -274,13 +272,17 @@ agentApp.onActivity(ActivityTypes.Message, async (context: TurnContext, state: A
                             text: textValue,
                             wrap: true
                         },
-                        ...(citationText ? [{
-                            type: "TextBlock",
-                            text: citationText,
-                            wrap: true,
-                            spacing: "Small",
-                            isSubtle: true
-                        }] : [])
+                        ...(
+                            citationTexts.length > 0
+                                ? citationTexts.map(text => ({
+                                    type: "TextBlock",
+                                    text,
+                                    wrap: true,
+                                    spacing: "Small",
+                                    isSubtle: true
+                                }))
+                                : []
+                        )
                     ],
                     $schema: "http://adaptivecards.io/schemas/adaptive-card.json"
                 };
