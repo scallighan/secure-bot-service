@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@azure/ai-agents": "^1.0.0",
+    "@azure/ai-projects": "^1.0.0-beta.10",
     "@azure/identity": "^4.10.2",
     "@microsoft/agents-hosting": "^1.0.0",
     "express": "^5.1.0"

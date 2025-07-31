@@ -4,7 +4,7 @@ import { TurnState, MemoryStorage, TurnContext, AgentApplication, AttachmentDown
   from '@microsoft/agents-hosting'
 import { version } from '@microsoft/agents-hosting/package.json'
 import { ActivityTypes } from '@microsoft/agents-activity'
-import { AgentsClient, RunStatus } from "@azure/ai-agents";
+import { AIProjectClient } from "@azure/ai-projects";
 import { DefaultAzureCredential } from "@azure/identity";
 import { stat } from 'fs';
 
@@ -175,46 +175,48 @@ agentApp.onActivity(ActivityTypes.Message, async (context: TurnContext, state: A
     console.error("Error: Unable to create credential.");
     await context.sendActivity("Error: Unable to create credential.");
   }
-  const client = new AgentsClient(projectEndpoint, credential);
-  if(!client){
-    console.error("Error: Unable to create client.");
-    await context.sendActivity("Error: Unable to create client.");
+  const project = new AIProjectClient(projectEndpoint, credential);
+  if(!project){
+    console.error("Error: Unable to create project client.");
+    await context.sendActivity("Error: Unable to create project client.");
   }
-  const agent = await client.getAgent(agentId);
+  
+  const agent = await project.agents.getAgent(agentId);
     if (!agent) {
         console.error("Error: Agent not found.");
         await context.sendActivity("Error: Agent not found.");
-    }
-  
-  const thread = (state.conversation.threadId) ? await client.threads.get(state.conversation.threadId) : await client.threads.create();
+    }  
+  const thread = (state.conversation.threadId) ? await project.agents.threads.get(state.conversation.threadId) : await project.agents.threads.create();
   if (!thread) {
     console.error("Failed to retrieve or create thread.");
     await context.sendActivity("Error: Unable to retrieve or create thread.");
   }
+  await context.sendActivity(`[${count}] Thread ID: ${thread.id}`)
   state.conversation.threadId = thread.id;
   if(!thread) {
     console.error("Failed to retrieve or create thread.");
     await context.sendActivity("Error: Unable to retrieve or create thread.");
   }else {
-    const message = await client.messages.create(thread.id, "user", `${context.activity.text}`);
+    const message = await project.agents.messages.create(thread.id, "user", `${context.activity.text}`);
     if (!message) {
       console.error("Failed to create message.");
       await context.sendActivity("Error: Unable to create message.");
     }
-    let run = await client.runs.create(thread.id, agent.id)
+    let run = await project.agents.runs.create(thread.id, agent.id)
     if (!run) {
         console.error("Failed to create run.");
         await context.sendActivity("Error: Unable to create run.");
     }
+
     while (run.status === "queued" || run.status === "in_progress") {
       await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for 1 second
-      run = await client.runs.get(thread.id, run.id);
+      run = await project.agents.runs.get(thread.id, run.id);
     }
 
     if (run.status === "failed") {
       await context.sendActivity(`[${count}] Run failed with status: ${run.status}`);
     } else {
-        const messages = await client.messages.list(thread.id, { order: "desc" });
+        const messages = await project.agents.messages.list(thread.id, { order: "desc" });
         console.log(`Messages: ${JSON.stringify(messages)}`);
 
         await context.sendActivity(`[${count}] ${messages.next()}`);
