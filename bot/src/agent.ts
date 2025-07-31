@@ -226,8 +226,8 @@ agentApp.onActivity(ActivityTypes.Message, async (context: TurnContext, state: A
             } else {
                 const messages = await project.agents.messages.list(thread.id, { order: "desc" });
                 console.log(`Messages: ${JSON.stringify(messages)}`);
-
-                await context.sendActivity(`[${count}] ${messages.next()}`);
+                const m = await messages.next();
+                await context.sendActivity(`[${count}] ${m}`);
             }
         }
     } catch (error) {

@@ -363,6 +363,12 @@ resource "azurerm_role_assignment" "Contributor" {
   principal_id         = azurerm_user_assigned_identity.this.principal_id
 }
 
+resource "azurerm_role_assignment" "aiuser" {
+  scope                = var.ai_foundry_rg_id
+  role_definition_name = "Azure AI User"
+  principal_id         = azurerm_user_assigned_identity.this.principal_id
+}
+
 resource "azurerm_container_app_environment" "this" {
   name                       = "ace-${local.func_name}"
   location                   = azurerm_resource_group.rg.location
@@ -420,6 +426,10 @@ resource "azurerm_container_app" "agent" {
         value = azurerm_user_assigned_identity.bot.client_id
       }
 
+      env {
+        name = "AZURE_CLIENT_ID"
+        value = azurerm_user_assigned_identity.this.client_id
+      }
       env {
         name = "AI_FOUNDRY_CLIENT_ID"
         value = azurerm_user_assigned_identity.this.client_id
