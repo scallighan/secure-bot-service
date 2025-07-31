@@ -21,3 +21,15 @@ variable "bot_tenant_id" {
 variable "custom_bot_domain" {
   type = string
 }
+
+variable "ai_foundry_agent_id" {
+  type = string
+}
+
+variable "ai_foundry_endpoint" {
+  type = string
+}
+
+variable "ai_foundry_rg_id" {
+  type = string
+}

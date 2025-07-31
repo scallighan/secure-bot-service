@@ -4,7 +4,9 @@ import { TurnState, MemoryStorage, TurnContext, AgentApplication, AttachmentDown
   from '@microsoft/agents-hosting'
 import { version } from '@microsoft/agents-hosting/package.json'
 import { ActivityTypes } from '@microsoft/agents-activity'
-
+import { AgentsClient, RunStatus } from "@azure/ai-agents";
+import { DefaultAzureCredential } from "@azure/identity";
+import { stat } from 'fs';
 
 // Define the shape of the conversation state
 interface ConversationState {
@@ -39,6 +41,24 @@ const status = async (context: TurnContext, state: ApplicationTurnState) => {
     const tokGraph = await agentApp.authorization.getToken(context, 'graph')
     const statusGraph = tokGraph.token !== undefined
     await context.sendActivity(MessageFactory.text(`Token status: Graph:${statusGraph}`))
+}
+
+const base64UrlEncode = (str: string) => {
+    // Encode the string to Base64
+    let base64 = btoa(str);
+    // Replace '+' with '-' and '/' with '_'
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+const base64UrlDecode = (base64Url: string) => {
+    // Replace '-' with '+' and '_' with '/'
+    let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    // Add padding if necessary
+    switch (base64.length % 4) {
+    case 2: base64 += '=='; break;
+    case 3: base64 += '='; break;
+    }
+    return atob(base64); // Decode the Base64 string
 }
 
 agentApp.onMessage('/status', status, ['graph'])
@@ -110,6 +130,25 @@ agentApp.onMessage(/^message/, async (context: TurnContext, state: ApplicationTu
   await context.sendActivity(`Matched with regex: ${context.activity.type}`)
 })
 
+// Handler for message who starts with /base64url 
+agentApp.onMessage(/^\/base64url/, async (context: TurnContext, state: ApplicationTurnState) => {
+  const inputTextArr = context.activity.text.split(' ')
+  if( inputTextArr.length < 2) {
+    await context.sendActivity('Usage: /base64url <text>')
+  }else if (inputTextArr.length >= 2) {
+    switch (inputTextArr[1]) {
+        case '-d':
+            const decodedText = base64UrlDecode(inputTextArr.slice(2).join(' '))
+            await context.sendActivity(`Decoded: ${decodedText}`)
+            break;
+        default:
+            const encodedText = base64UrlEncode(inputTextArr.slice(1).join(' '))
+            await context.sendActivity(`Encoded: ${encodedText}`)
+            break;
+    }
+  }
+})
+
 
 // Handler for activities where the type is exactly 'message', using a predicate function
 // agentApp.onActivity(
@@ -125,5 +164,36 @@ agentApp.onActivity(ActivityTypes.Message, async (context: TurnContext, state: A
   let count = state.conversation.count ?? 0
   state.conversation.count = ++count
 
-  await context.sendActivity(`[${count}] echoing: ${context.activity.text}`)
+  const projectEndpoint = process.env["AI_FOUNDRY_ENDPOINT"] || "http://localhost/";
+  const modelDeploymentName = process.env["AI_FOUNDRY_MODEL_NAME"] || "gpt-4o";
+  const agentId = process.env["AI_FOUNDRY_AGENT_ID"] || "";
+  const client = new AgentsClient(projectEndpoint, new DefaultAzureCredential({managedIdentityClientId: process.env["AI_FOUNDRY_CLIENT_ID"]}));
+  const agent = await client.getAgent(agentId);
+  
+  const thread = (!state.conversation.threadId) ? await client.threads.create() : await client.threads.get(state.conversation.threadId);
+  if(!thread) {
+    console.error("Failed to retrieve or create thread.");
+    await context.sendActivity("Error: Unable to retrieve or create thread.");
+  }else {
+    const message = await client.messages.create(thread.id, "user", context.activity.text);
+    let run = await client.runs.create(thread.id, agent.id)
+
+    while (run.status === "queued" || run.status === "in_progress") {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for 1 second
+      run = await client.runs.get(thread.id, run.id);
+    }
+
+    if (run.status === "failed") {
+      await context.sendActivity(`[${count}] Run failed with status: ${run.status}`);
+    } else {
+        const messages = await client.messages.list(thread.id, { order: "desc" });
+        console.log(`Messages: ${JSON.stringify(messages)}`);
+        
+        await context.sendActivity(`[${count}] ${messages.next()}`);
+    }
+
+    //await context.sendActivity(`[${count}] echoing: ${context.activity.text}`)
+  }
+
+  
 })

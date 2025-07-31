@@ -357,6 +357,12 @@ resource "azurerm_role_assignment" "reader" {
   principal_id         = azurerm_user_assigned_identity.this.principal_id
 }
 
+resource "azurerm_role_assignment" "Contributor" {
+  scope                = var.ai_foundry_rg_id
+  role_definition_name = "Contributor"
+  principal_id         = azurerm_user_assigned_identity.this.principal_id
+}
+
 resource "azurerm_container_app_environment" "this" {
   name                       = "ace-${local.func_name}"
   location                   = azurerm_resource_group.rg.location
@@ -412,6 +418,26 @@ resource "azurerm_container_app" "agent" {
       env {
         name = "clientId"
         value = azurerm_user_assigned_identity.bot.client_id
+      }
+
+      env {
+        name = "AI_FOUNDRY_CLIENT_ID"
+        value = azurerm_user_assigned_identity.this.client_id
+      }
+
+      env {
+        name = "AI_FOUNDRY_ENDPOINT"
+        value = var.ai_foundry_endpoint
+      }
+
+      env {
+        name = "AI_FOUNDRY_MODEL_NAME"
+        value = "gpt-4o"
+      }
+
+      env {
+        name = "AI_FOUNDRY_AGENT_ID"
+        value = var.ai_foundry_agent_id
       }
 
       # env {
