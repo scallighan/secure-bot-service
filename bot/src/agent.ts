@@ -170,27 +170,32 @@ agentApp.onActivity(ActivityTypes.Message, async (context: TurnContext, state: A
   const projectEndpoint = process.env["AI_FOUNDRY_ENDPOINT"] || "http://localhost/";
   const modelDeploymentName = process.env["AI_FOUNDRY_MODEL_NAME"] || "gpt-4o";
   const agentId = process.env["AI_FOUNDRY_AGENT_ID"] || "";
+  console.log(`Project Endpoint: ${projectEndpoint}, Model Deployment Name: ${modelDeploymentName}, Agent ID: ${agentId}`);
   const credential = new DefaultAzureCredential({managedIdentityClientId: process.env["AI_FOUNDRY_CLIENT_ID"]});
   if(!credential){
     console.error("Error: Unable to create credential.");
     await context.sendActivity("Error: Unable to create credential.");
   }
+  console.log(`Credential: ${JSON.stringify(credential)}`);
   const project = new AIProjectClient(projectEndpoint, credential);
   if(!project){
     console.error("Error: Unable to create project client.");
     await context.sendActivity("Error: Unable to create project client.");
   }
+  console.log(`Project: ${JSON.stringify(project)}`);
   
   const agent = await project.agents.getAgent(agentId);
     if (!agent) {
         console.error("Error: Agent not found.");
         await context.sendActivity("Error: Agent not found.");
     }  
+    console.log(`Agent: ${JSON.stringify(agent)}`);
   const thread = (state.conversation.threadId) ? await project.agents.threads.get(state.conversation.threadId) : await project.agents.threads.create();
   if (!thread) {
     console.error("Failed to retrieve or create thread.");
     await context.sendActivity("Error: Unable to retrieve or create thread.");
   }
+  console.log(`Thread ID: ${thread.id}`);
   await context.sendActivity(`[${count}] Thread ID: ${thread.id}`)
   state.conversation.threadId = thread.id;
   if(!thread) {
@@ -202,19 +207,22 @@ agentApp.onActivity(ActivityTypes.Message, async (context: TurnContext, state: A
       console.error("Failed to create message.");
       await context.sendActivity("Error: Unable to create message.");
     }
+    console.log(`Message created: ${JSON.stringify(message)}`);
     let run = await project.agents.runs.create(thread.id, agent.id)
     if (!run) {
         console.error("Failed to create run.");
         await context.sendActivity("Error: Unable to create run.");
     }
+    console.log(`Run created: ${JSON.stringify(run)}`);
 
     while (run.status === "queued" || run.status === "in_progress") {
       await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for 1 second
       run = await project.agents.runs.get(thread.id, run.id);
     }
-
+    console.log(`Run completed with status: ${run.status}`);
     if (run.status === "failed") {
-      await context.sendActivity(`[${count}] Run failed with status: ${run.status}`);
+        console.error("Run failed with status: " + run.status);
+        await context.sendActivity(`[${count}] Run failed with status: ${run.status}`);
     } else {
         const messages = await project.agents.messages.list(thread.id, { order: "desc" });
         console.log(`Messages: ${JSON.stringify(messages)}`);
