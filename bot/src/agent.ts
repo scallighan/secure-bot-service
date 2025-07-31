@@ -165,10 +165,17 @@ agentApp.onActivity(ActivityTypes.Message, async (context: TurnContext, state: A
   let count = state.conversation.count ?? 0
   state.conversation.count = ++count
 
+  await context.sendActivity(`[${count}] echoing: ${context.activity.text}`)
+
   const projectEndpoint = process.env["AI_FOUNDRY_ENDPOINT"] || "http://localhost/";
   const modelDeploymentName = process.env["AI_FOUNDRY_MODEL_NAME"] || "gpt-4o";
   const agentId = process.env["AI_FOUNDRY_AGENT_ID"] || "";
-  const client = new AgentsClient(projectEndpoint, new DefaultAzureCredential({managedIdentityClientId: process.env["AI_FOUNDRY_CLIENT_ID"]}));
+  const credential = new DefaultAzureCredential({managedIdentityClientId: process.env["AI_FOUNDRY_CLIENT_ID"]});
+  if(!credential){
+    console.error("Error: Unable to create credential.");
+    await context.sendActivity("Error: Unable to create credential.");
+  }
+  const client = new AgentsClient(projectEndpoint, credential);
   if(!client){
     console.error("Error: Unable to create client.");
     await context.sendActivity("Error: Unable to create client.");
